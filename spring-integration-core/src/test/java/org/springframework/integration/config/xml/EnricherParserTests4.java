@@ -34,12 +34,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
- * @author Mark Fisher
- * @author Gunnar Hillert
- * @author Gary Russell
- * @author Artem Bilan
+ * @author liujiong
  *
- * @since 2.1
+ * @since 4.1
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
@@ -49,7 +46,7 @@ public class EnricherParserTests4 {
 	private ApplicationContext context;
 
 	@Test
-	public void integrationTest() {
+	public void nullResultActionTest() {
 		SubscribableChannel requests = context.getBean("requests", SubscribableChannel.class);
 
 		class Foo extends AbstractReplyProducingMessageHandler {
@@ -79,20 +76,6 @@ public class EnricherParserTests4 {
 		assertEquals("Could not determine the notOverwrite", headers.get("notOverwrite"));
 	}
 	
-
-	private static class Source {
-
-		private final String sourceName;
-
-		Source(String sourceName) {
-			this.sourceName = sourceName;
-		}
-
-		@SuppressWarnings("unused")
-		public String getSourceName() {
-			return sourceName;
-		}
-	}
 
 	public static class Target implements Cloneable {
 
