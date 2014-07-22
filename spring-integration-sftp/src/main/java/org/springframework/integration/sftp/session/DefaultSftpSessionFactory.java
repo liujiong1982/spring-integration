@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.file.remote.session.SessionFactory;
@@ -367,7 +368,15 @@ public class DefaultSftpSessionFactory implements SessionFactory<LsEntry>, Share
 
 		// private key
 		if (this.privateKey != null) {
-			String privateKeyFilePath = this.privateKey.getFile().getAbsolutePath();
+			String privateKeyFilePath = null;
+			if (this.privateKey instanceof ByteArrayResource){
+//				byte[] byteArray = ((ByteArrayResource) this.privateKey).getByteArray();
+				privateKeyFilePath = ((ByteArrayResource) this.privateKey).getFile().getAbsolutePath();
+//				this.jsch.addIdentity(this.user, byteArray, pubkey, this.password);
+			}
+			else {
+				privateKeyFilePath = this.privateKey.getFile().getAbsolutePath();
+			}
 			if (StringUtils.hasText(this.privateKeyPassphrase)) {
 				this.jsch.addIdentity(privateKeyFilePath, this.privateKeyPassphrase);
 			}
