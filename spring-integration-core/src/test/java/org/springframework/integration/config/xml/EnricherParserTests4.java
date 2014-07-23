@@ -17,13 +17,16 @@
 package org.springframework.integration.config.xml;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.integration.handler.AbstractReplyProducingMessageHandler;
+import org.springframework.integration.handler.advice.AbstractRequestHandlerAdvice;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -34,7 +37,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
- * @author liujiong
+ * @author Liujiong
  *
  * @since 4.1
  */
@@ -45,11 +48,13 @@ public class EnricherParserTests4 {
 	@Autowired
 	private ApplicationContext context;
 
+	private static volatile int adviceCalled;
+
 	@Test
-	public void nullResultActionTest() {
+	public void nullResultIntegrationTest() {
 		SubscribableChannel requests = context.getBean("requests", SubscribableChannel.class);
 
-		class Foo extends AbstractReplyProducingMessageHandler {
+		class NullFoo extends AbstractReplyProducingMessageHandler {
 
 			@Override
 			protected Object handleRequestMessage(Message<?> requestMessage) {
@@ -57,25 +62,31 @@ public class EnricherParserTests4 {
 			}
 		}
 
-		Foo foo = new Foo();
+		NullFoo foo = new NullFoo();
 		foo.setOutputChannel(context.getBean("replies", MessageChannel.class));
 		requests.subscribe(foo);
 		Target original = new Target();
-		Message<?> request = MessageBuilder.withPayload(original).setHeader("sourceName", "test").setHeader("notOverwrite", "test").build();
+		Message<?> request = MessageBuilder.withPayload(original).setHeader("sourceName", "test")
+				.setHeader("notOverwrite", "test").build();
 		context.getBean("input", MessageChannel.class).send(request);
 		Message<?> reply = context.getBean("output", PollableChannel.class).receive(0);
 		Target enriched = (Target) reply.getPayload();
 		assertEquals("Could not determine the name", enriched.getName());
 		assertEquals(11, enriched.getAge());
+		assertEquals(null, enriched.getGender());
 		assertTrue(enriched.isMarried());
+		assertNotSame(original, enriched);
+		assertEquals(1, adviceCalled);
 
 		MessageHeaders headers = reply.getHeaders();
 		assertEquals("Could not determine the foo", headers.get("foo"));
 		assertEquals("Could not determine the testBean", headers.get("testBean"));
 		assertEquals("Could not determine the sourceName", headers.get("sourceName"));
-		assertEquals("Could not determine the notOverwrite", headers.get("notOverwrite"));
+		assertEquals("test", headers.get("notOverwrite"));
+		adviceCalled--;
+		requests.unsubscribe(foo);
 	}
-	
+
 
 	public static class Target implements Cloneable {
 
@@ -134,4 +145,13 @@ public class EnricherParserTests4 {
 		MALE, FEMALE
 	}
 
+	public static class FooAdvice extends AbstractRequestHandlerAdvice {
+
+		@Override
+		protected Object doInvoke(ExecutionCallback callback, Object target, Message<?> message) throws Exception {
+			adviceCalled++;
+			return callback.execute();
+		}
+
+	}
 }
