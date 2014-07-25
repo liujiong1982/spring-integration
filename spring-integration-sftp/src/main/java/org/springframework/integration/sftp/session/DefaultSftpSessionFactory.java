@@ -20,12 +20,12 @@ import java.util.Properties;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.file.remote.session.SessionFactory;
 import org.springframework.integration.file.remote.session.SharedSessionCapable;
 import org.springframework.util.Assert;
+import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -368,21 +368,22 @@ public class DefaultSftpSessionFactory implements SessionFactory<LsEntry>, Share
 
 		// private key
 		if (this.privateKey != null) {
-			String privateKeyFilePath = null;
-			if (this.privateKey instanceof ByteArrayResource){
-//				byte[] byteArray = ((ByteArrayResource) this.privateKey).getByteArray();
-				privateKeyFilePath = ((ByteArrayResource) this.privateKey).getFile().getAbsolutePath();
-//				this.jsch.addIdentity(this.user, byteArray, pubkey, this.password);
-			}
-			else {
-				privateKeyFilePath = this.privateKey.getFile().getAbsolutePath();
-			}
-			if (StringUtils.hasText(this.privateKeyPassphrase)) {
-				this.jsch.addIdentity(privateKeyFilePath, this.privateKeyPassphrase);
-			}
-			else {
-				this.jsch.addIdentity(privateKeyFilePath);
-			}
+//			String privateKeyFilePath = null;
+			byte[] keyByteArray = StreamUtils.copyToByteArray(this.privateKey.getInputStream());
+			this.jsch.addIdentity(this.user, keyByteArray, null, this.privateKeyPassphrase.getBytes());
+////				privateKeyFilePath = ((ByteArrayResource) this.privateKey).getFile().getAbsolutePath();
+////				this.jsch.addIdentity(this.user, byteArray, pubkey, this.password);
+//			}
+//			
+//			else {
+//				privateKeyFilePath = this.privateKey.getFile().getAbsolutePath();
+//			}
+//			if (StringUtils.hasText(this.privateKeyPassphrase)) {
+//				this.jsch.addIdentity(privateKeyFilePath, this.privateKeyPassphrase);
+//			}
+//			else {
+//				this.jsch.addIdentity(privateKeyFilePath);
+//			}
 		}
 		com.jcraft.jsch.Session jschSession = this.jsch.getSession(this.user, this.host, this.port);
 		if (this.sessionConfig != null){

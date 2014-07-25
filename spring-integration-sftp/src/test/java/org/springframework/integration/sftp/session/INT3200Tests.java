@@ -16,6 +16,8 @@
 package org.springframework.integration.sftp.session;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.PasswordAuthenticator;
@@ -24,7 +26,9 @@ import org.apache.sshd.server.session.ServerSession;
 import org.junit.Test;
 
 import org.springframework.core.io.UrlResource;
-import org.springframework.integration.test.util.SocketUtils;
+import org.springframework.integration.file.remote.session.Session;
+
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 /**
  * @author Gary Russell
@@ -50,7 +54,34 @@ public class INT3200Tests {
 			});
 			server.setPort(port);
 			server.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
+//			List<DefaultSftpSessionFactory> list=new ArrayList<DefaultSftpSessionFactory>();
+			
+			DefaultSftpSessionFactory f = new DefaultSftpSessionFactory();
+//			list.add(f);
+//			server.setServiceFactories(list);
 			server.start();
+			
+			
+			
+			
+
+//			 JSch jsch = new JSch();
+//
+//		        Session session = jsch.getSession( "root", "localhost", 2222 );
+//		        java.util.Properties config = new java.util.Properties();
+//		        config.put("StrictHostKeyChecking", "no");
+//		        config.put("PreferredAuthentications","password");
+//		        session.setConfig(config);
+//
+//		        session.setPassword( "1234" );
+//		        session.connect( 60000 );
+//		        com.jcraft.jsch.Channel channel = session.openChannel("sftp");
+//		        ChannelSftp sftp = ( ChannelSftp ) channel;
+//		        sftp.connect( 60000 );
+//		        System.out.println("bağlantı sağlandı");
+//		        sftp.disconnect();
+//		        System.out.println("bağlantı sonlandı");
+			
 
 			DefaultSftpSessionFactory f = new DefaultSftpSessionFactory();
 			f.setHost("localhost");
@@ -60,7 +91,9 @@ public class INT3200Tests {
 			f.setPassword("hello");
 			URL uri=INT3200Tests.class.getResource("sftp_rsa");
 			f.setPrivateKey(new UrlResource(this.getClass().getResource("sftp_rsa")));
-			f.getSession();
+			Session<LsEntry> session = f.getSession();
+			System.out.println("--------------------------------------------------------");
+			System.out.println(session);
 //			int n = 0;
 //			while (true) {
 //				try {
