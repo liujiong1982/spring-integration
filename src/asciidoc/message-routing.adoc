@@ -1,0 +1,9 @@
+[[messaging-routing-chapter]]
+= Message Routing
+
+include::./router.adoc[]
+include::./filter.adoc[]
+include::./splitter.adoc[]
+include::./aggregator.adoc[]
+include::./resequencer.adoc[]
+include::./chain.adoc[]

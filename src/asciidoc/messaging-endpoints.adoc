@@ -1,0 +1,11 @@
+[[messaging-endpoints-chapter]]
+= Messaging Endpoints
+
+include::./endpoint.adoc[]
+include::./gateway.adoc[]
+include::./service-activator.adoc[]
+include::./delayer.adoc[]
+include::./scripting.adoc[]
+include::./groovy.adoc[]
+include::./handler-advice.adoc[]
+include::./logging-adapter.adoc[]

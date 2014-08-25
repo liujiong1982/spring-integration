@@ -1,0 +1,7 @@
+[[messaging-channels-section]]
+= Messaging Channels
+
+include::./channel.adoc[]
+include::./polling-consumer.adoc[]
+include::./channel-adapter.adoc[]
+include::./bridge.adoc[]

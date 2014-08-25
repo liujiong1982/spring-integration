@@ -1,0 +1,73 @@
+[[spring-integration-reference]]
+include::{baseDir}/preface.adoc[]
+[[whats-new-part]]
+== What's new?
+
+[[spring-integration-intro]]
+For those who are already familiar with Spring Integration, this chapter provides a brief overview of the new features of version 4.1. If you are interested in the changes and features, that were introduced in earlier versions, please see chapter: <<history>>
+
+include::{baseDir}/whats-new.adoc[]
+[[spring-integration-introduction]]
+== Overview of Spring Integration Framework
+
+[[spring-integration-intro]]
+Spring Integration provides an extension of the Spring programming model to support the well-known http://www.eaipatterns.com/[Enterprise Integration Patterns]. It enables lightweight messaging *within* Spring-based applications and supports integration with external systems via declarative adapters. Those adapters provide a higher-level of abstraction over Spring's support for remoting, messaging, and scheduling. Spring Integration's primary goal is to provide a simple model for building enterprise integration solutions while maintaining the separation of concerns that is essential for producing maintainable, testable code.
+
+include::{baseDir}/overview.adoc[]
+[[spring-integration-core-messaging]]
+== Core Messaging
+
+[[spring-integration-core-msg]]
+This section covers all aspects of the core messaging API in Spring Integration. Here you will learn about Messages, Message Channels, and Message Endpoints. Many of the Enterprise Integration Patterns are covered here as well, such as Filters, Routers, Transformers, Service-Activators, Splitters, and Aggregators. The section also contains material about System Management, including the Control Bus and Message History support.
+
+include::{baseDir}/messaging-channels.adoc[]
+include::{baseDir}/message-construction.adoc[]
+include::{baseDir}/message-routing.adoc[]
+include::{baseDir}/message-transformation.adoc[]
+include::{baseDir}/messaging-endpoints.adoc[]
+include::{baseDir}/system-management.adoc[]
+[[spring-integration-adapters]]
+== Integration Endpoints
+
+[[spring-integration-adapters]]
+This section covers the various Channel Adapters and Messaging Gateways provided by Spring Integration to support Message-based communication with external systems.
+
+include::{baseDir}/endpoint-summary.adoc[]
+include::{baseDir}/amqp.adoc[]
+include::{baseDir}/event.adoc[]
+include::{baseDir}/feed.adoc[]
+include::{baseDir}/file.adoc[]
+include::{baseDir}/ftp.adoc[]
+include::{baseDir}/gemfire.adoc[]
+include::{baseDir}/http.adoc[]
+include::{baseDir}/jdbc.adoc[]
+include::{baseDir}/jpa.adoc[]
+include::{baseDir}/jms.adoc[]
+include::{baseDir}/mail.adoc[]
+include::{baseDir}/mongodb.adoc[]
+include::{baseDir}/mqtt.adoc[]
+include::{baseDir}/redis.adoc[]
+include::{baseDir}/resource.adoc[]
+include::{baseDir}/rmi.adoc[]
+include::{baseDir}/sftp.adoc[]
+include::{baseDir}/stream.adoc[]
+include::{baseDir}/syslog.adoc[]
+include::{baseDir}/ip.adoc[]
+include::{baseDir}/twitter.adoc[]
+include::{baseDir}/ws.adoc[]
+include::{baseDir}/xml.adoc[]
+include::{baseDir}/xmpp.adoc[]
+[[spring-integration-appendices]]
+== Appendices
+
+[[spring-integration-adapters]]
+Advanced Topics and Additional Resources
+
+include::{baseDir}/spel.adoc[]
+include::{baseDir}/message-publishing.adoc[]
+include::{baseDir}/transactions.adoc[]
+include::{baseDir}/security.adoc[]
+include::{baseDir}/samples.adoc[]
+include::{baseDir}/configuration.adoc[]
+include::{baseDir}/resources.adoc[]
+include::{baseDir}/history.adoc[]

@@ -1,0 +1,56 @@
+[[logging-channel-adapter]]
+= Logging Channel Adapter
+
+The `<logging-channel-adapter/>` is often used in conjunction with a Wire Tap, as discussed in <<channel-wiretap>>. However, it can also be used as the ultimate consumer of any flow. For example, consider a flow that ends with a `<service-activator/>` that returns a result, but you wish to discard that result. To do that, you could send the result to `NullChannel`. Alternatively, you can route it to an `INFO` level `<logging-channel-adapter/>`; that way, you can see the discarded message when logging at `INFO` level, but not see it when logging at, say, `WARN` level. With a `NullChannel`, you would only see the discarded message when logging at `DEBUG` level.
+
+[source]
+----
+
+<int:logging-channel-adapter
+	channel=""TBD Section qName:co level:3, chunks:[] attrs:[id:log-ca-010]
+	level="INFO"TBD Section qName:co level:3, chunks:[] attrs:[id:log-ca-020]
+	expression=""TBD Section qName:co level:3, chunks:[] attrs:[id:log-ca-030]
+	log-full-message="false"TBD Section qName:co level:3, chunks:[] attrs:[id:log-ca-040]
+	logger-name=""TBD Section qName:co level:3, chunks:[] attrs:[id:log-ca-050]/>
+
+----
+
+TBD Section qName:calloutlist level:2, chunks:[
+		, TBD Section qName:callout level:3, chunks:[
+			, Paragraph: chunks:[
+				The channel connecting the logging adapter to an upstream component.
+			], 
+		] attrs:[arearefs:log-ca-010], 
+		, TBD Section qName:callout level:3, chunks:[
+			, Paragraph: chunks:[
+				The logging level at which messages sent to this adapter will be logged.
+				Default: , Monospaced ([INFO]), .
+			], 
+		] attrs:[arearefs:log-ca-020], 
+		, TBD Section qName:callout level:3, chunks:[
+			, Paragraph: chunks:[
+				A SpEL expression representing exactly what part(s) of the message will be
+				logged. Default: , Monospaced ([payload]),  - just the payload will be logged.
+				This attribute cannot be specified if , Monospaced ([log-full-message]),  is
+				specified., 
+			], 
+		] attrs:[arearefs:log-ca-030], 
+		, TBD Section qName:callout level:3, chunks:[
+			, Paragraph: chunks:[
+				When , Monospaced ([true]), , the entire message will be logged (including headers).
+				Default: , Monospaced ([false]),  - just the payload will be logged.
+				This attribute cannot be specified if , Monospaced ([expression]),  is
+				specified., 
+			], 
+		] attrs:[arearefs:log-ca-040], 
+		, TBD Section qName:callout level:3, chunks:[
+			, Paragraph: chunks:[
+				Specifies the , Bold Section qName:emphasis level:5, chunks:[name] attrs:[:],  of the logger (known as
+				, Monospaced ([category]),  in , Monospaced ([log4j]), )
+				used for log messages created by this adapter. This enables setting the, 
+				log name (in the logging subsystem) for individual adapters. By default, all
+				adapters will log under the name, 
+				, Monospaced ([org.springframework.integration.handler.LoggingHandler]), .
+			], 
+		] attrs:[arearefs:log-ca-050], 
+	] attrs:[:]

@@ -1,0 +1,6 @@
+[[messaging-transformation-chapter]]
+= Message Transformation
+
+include::./transformer.adoc[]
+include::./content-enrichment.adoc[]
+include::./claim-check.adoc[]

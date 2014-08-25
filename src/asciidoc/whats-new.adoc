@@ -1,0 +1,76 @@
+[[whats-new]]
+= What's new in Spring Integration 4.1?
+
+This chapter provides an overview of the new features and improvements that have been introduced with Spring Integration 4.1. If you are interested in more details, please see the Issue Tracker tickets that were resolved as part of the 4.1 development process.
+
+[[4.1-general]]
+== General Changes
+
+[[4.1-amqp-inbound-missing-queues]]
+=== AMQP Inbound Endpoints, Channel
+
+Elements that utilize a message listener container (inbound endpoints, channel) now support the `missing-queues-fatal` attribute. See <<amqp>> for more information.
+
+[[4.1-amqp-outbound-lazy-connect]]
+=== AMQP Outbound Endpoints
+
+The AMQP outbound endpoints support a new property `lazy-connect` (default true). When true, the connection to the broker is not established until the first message arrives (assuming there are no inbound endpoints, which always attempt to establish the connection during startup). When set the 'false' an attempt to establish the connection is made during application startup. See <<amqp>> for more information.
+
+[[4.1-sms-copy-on-get]]
+=== SimpleMessageStore
+
+The `SimpleMessageStore` no longer makes a copy of the group when calling `getMessageGroup()`. See <<sms-caution>> for more information.
+
+[[4.1-ws-encode-uri]]
+=== Web Service Outbound Gateway: encode-uri
+
+The `<ws:outbound-gateway/>` now provides an `encode-uri` attribute to allow disabling the encoding of the URI object before sending the request.
+
+[[4.1-http-status-code]]
+=== Http Inbound Channel Adapter and StatusCode
+
+The `<http:inbound-channel-adapter>` can now be configured with a `status-code-expression` to override the default `200 OK` status. See <<http-namespace>> for more information.
+
+[[4.1-mqtt]]
+=== MQTT Adapter Changes
+
+The MQTT channel adapters can now be configured to connect to multiple servers, for example, to support High Availability (HA). See <<mqtt>> for more information.
+
+The MQTT message-driven channel adapter now supports specifying the QoS setting for each subscription. See <<mqtt-inbound>> for more information.
+
+The MQTT outbound channel adapter now supports asynchronous sends, avoiding blocking until delivery is confirmed. See <<mqtt-outbound>> for more information.
+
+It is now possible to programmatically subscribe to and unsubscribe from topics at runtime. See <<mqtt-inbound>> for more information.
+
+[[4.1-sftp]]
+=== FTP/SFTP Adapter Changes
+
+The FTP and SFTP outbound channel adapters now support appending to remote files, as well as taking specific actions when a remote file already exists. The remote file templates now also support this as well as `rmdir()` and `exists()`. In addition, the remote file templates provide access to the underlying client object enabling access to low-level APIs.
+
+See <<ftp>> and <<sftp>> for more information.
+
+[[4.1-splitter-iterator]]
+=== Splitter and Iterator
+
+`Splitter` components now support an `Iterator` as the result object for producing output messages. See <<splitter>> for more information.
+
+[[4.1-aggregator]]
+=== Aggregator
+
+`Aggregator`s now support a new attribute `expire-groups-on-timeout`. See <<aggregator-config>> for more information.
+
+[[4.1-content-enricher-improvement]]
+=== Content Enricher Improvements
+
+Add null-result-expression attribute, which will be evaluated and returned if `<enricher>` returns null. It can be added in `<header>` and `<property>`. See <<content-enricher>> for more information.
+
+[[4.1-header-channel-registry]]
+=== Header Channel Registry
+
+The `<header-enricher/>`'s `<header-channels-to-string/>` element can now override the header channel registry's default time for retaining channel mappings. See <<header-channel-registry>> for more information.
+
+[[4.1-orderly-shutdown]]
+=== Orderly Shutdown
+
+Improvements have been made to the orderly shutdown algorithm. See <<jmx-shutdown>> for more information.
+

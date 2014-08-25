@@ -1,0 +1,9 @@
+[[system-management-chapter]]
+= System Management
+
+include::./jmx.adoc[]
+include::./message-history.adoc[]
+include::./message-store.adoc[]
+include::./meta-data-store.adoc[]
+include::./control-bus.adoc[]
+include::./shutdown.adoc[]

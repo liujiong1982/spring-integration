@@ -1,0 +1,465 @@
+[[jmx]]
+= JMX Support
+
+Spring Integration provides *Channel Adapters* for receiving and publishing JMX Notifications. There is also an *Inbound Channel Adapter* for polling JMX MBean attribute values, and an *Outbound Channel Adapter* for invoking JMX MBean operations.
+
+[[jmx-notification-listening-channel-adapter]]
+== Notification Listening Channel Adapter
+
+The *Notification-listening Channel Adapter* requires a JMX ObjectName for the MBean that publishes notifications to which this listener should be registered. A very simple configuration might look like this:
+
+[source,xml]
+----
+<int-jmx:notification-listening-channel-adapter id="adapter"
+    channel="channel"
+    object-name="example.domain:name=publisher"/>
+----
+
+TIP: The *notification-listening-channel-adapter* registers with an `MBeanServer` at startup, and the default bean name is *mbeanServer* which happens to be the same bean name generated when using Spring's *<context:mbean-server/>* element. If you need to use a different name, be sure to include the *mbean-server* attribute.
+
+The adapter can also accept a reference to a `NotificationFilter` and a *handback* Object to provide some context that is passed back with each Notification. Both of those attributes are optional. Extending the above example to include those attributes as well as an explicit `MBeanServer` bean name would produce the following:
+
+[source,xml]
+----
+<int-jmx:notification-listening-channel-adapter id="adapter"
+    channel="channel"
+    mbean-server="someServer"
+    object-name="example.domain:name=somePublisher"
+    notification-filter="notificationFilter"
+    handback="myHandback"/>
+----
+
+The *Notification-listening Channel Adapter* is event-driven and registered with the `MBeanServer` directly. It does not require any poller configuration.
+
+NOTE: For this component only, the *object-name* attribute can contain an ObjectName pattern (e.g. "org.foo:type=Bar,name=*") and the adapter will receive notifications from all MBeans with ObjectNames that match the pattern. In addition, the *object-name* attribute can contain a SpEL reference to a <util:list/> of ObjectName patterns: [source,xml]
+----
+<jmx:notification-listening-channel-adapter id="manyNotificationsAdapter"
+    channel="manyNotificationsChannel"
+    object-name="#{patterns}"/>
+
+<util:list id="patterns">
+    <value>org.foo:type=Foo,name=*</value>
+    <value>org.foo:type=Bar,name=*</value>
+</util:list>
+----
+
+ The names of the located MBean(s) will be logged when DEBUG level logging is enabled.
+
+[[jmx-notification-publishing-channel-adapter]]
+== Notification Publishing Channel Adapter
+
+The *Notification-publishing Channel Adapter* is relatively simple. It only requires a JMX ObjectName in its configuration as shown below.
+
+[source,xml]
+----
+<context:mbean-export/>
+
+<int-jmx:notification-publishing-channel-adapter id="adapter"
+    channel="channel"
+    object-name="example.domain:name=publisher"/>
+----
+
+It does also require that an `MBeanExporter` be present in the context. That is why the *<context:mbean-export/>* element is shown above as well.
+
+When Messages are sent to the channel for this adapter, the Notification is created from the Message content. If the payload is a String it will be passed as the *message* text for the Notification. Any other payload type will be passed as the *userData* of the Notification.
+
+JMX Notifications also have a *type*, and it should be a dot-delimited String. There are two ways to provide the *type*. Precedence will always be given to a Message header value associated with the `JmxHeaders.NOTIFICATION_TYPE` key. On the other hand, you can rely on a fallback *default-notification-type* attribute provided in the configuration.
+
+[source,xml]
+----
+<context:mbean-export/>
+
+<int-jmx:notification-publishing-channel-adapter id="adapter"
+    channel="channel"
+    object-name="example.domain:name=publisher"
+    default-notification-type="some.default.type"/>
+----
+
+[[jmx-attribute-polling-channel-adapter]]
+== Attribute Polling Channel Adapter
+
+The *Attribute Polling Channel Adapter* is useful when you have a requirement, to periodically check on some value that is available through an MBean as a managed attribute. The poller can be configured in the same way as any other polling adapter in Spring Integration (or it's possible to rely on the default poller). The *object-name* and *attribute-name* are required. An MBeanServer reference is also required, but it will automatically check for a bean named *mbeanServer* by default, just like the *Notification-listening Channel Adapter* described above.
+
+[source,xml]
+----
+<int-jmx:attribute-polling-channel-adapter id="adapter"
+    channel="channel"
+    object-name="example.domain:name=someService"
+    attribute-name="InvocationCount">
+        <int:poller max-messages-per-poll="1" fixed-rate="5000"/>
+</int-jmx:attribute-polling-channel-adapter>
+----
+
+[[tree-polling-channel-adapter]]
+== Tree Polling Channel Adapter
+
+The *Tree Polling Channel Adapter* queries the JMX MBean tree and sends a message with a payload that is the graph of objects that matches the query. By default the MBeans are mapped to primitives and simple Objects like Map, List and arrays - permitting simple transformation, for example, to JSON. An MBeanServer reference is also required, but it will automatically check for a bean named *mbeanServer* by default, just like the *Notification-listening Channel Adapter* described above. A basic configuration would be:
+
+[source,xml]
+----
+<int-jmx:tree-polling-channel-adapter id="adapter"
+    channel="channel"
+    query-name="example.domain:type=*">
+        <int:poller max-messages-per-poll="1" fixed-rate="5000"/>
+</int-jmx:tree-polling-channel-adapter>
+----
+
+This will include all attributes on the MBeans selected. You can filter the attributes by providing an `MBeanObjectConverter` that has an appropriate filter configured. The converter can be provided as a reference to a bean definition using the `converter` attribute, or as an inner <bean/> definition. A `DefaultMBeanObjectConverter` is provided which can take a `MBeanAttributeFilter` in its constructor argument.
+
+Two standard filters are provided; the `NamedFieldsMBeanAttributeFilter` allows you to specify a list of attributes to include and the `NotNamedFieldsMBeanAttributeFilter` allows you to specify a list of attributes to exclude. You can also implement your own filter
+
+[[jmx-operation-invoking-channel-adapter]]
+== Operation Invoking Channel Adapter
+
+The *operation-invoking-channel-adapter* enables Message-driven invocation of any managed operation exposed by an MBean. Each invocation requires the operation name to be invoked and the ObjectName of the target MBean. Both of these must be explicitly provided via adapter configuration:
+
+[source,xml]
+----
+<int-jmx:operation-invoking-channel-adapter id="adapter"
+    object-name="example.domain:name=TestBean"
+    operation-name="ping"/>
+----
+
+Then the adapter only needs to be able to discover the *mbeanServer* bean. If a different bean name is required, then provide the *mbean-server* attribute with a reference.
+
+The payload of the Message will be mapped to the parameters of the operation, if any. A Map-typed payload with String keys is treated as name/value pairs, whereas a List or array would be passed as a simple argument list (with no explicit parameter names). If the operation requires a single parameter value, then the payload can represent that single value, and if the operation requires no parameters, then the payload would be ignored.
+
+If you want to expose a channel for a single common operation to be invoked by Messages that need not contain headers, then that option works well.
+
+[[jmx-operation-invoking-outbound-gateway]]
+== Operation Invoking Outbound Gateway
+
+Similar to the *operation-invoking-channel-adapter* Spring Integration also provides a *operation-invoking-outbound-gateway*, which could be used when dealing with non-void operations and a return value is required. Such return value will be sent as message payload to the *reply-channel* specified by this Gateway.
+
+[source,xml]
+----
+<int-jmx:operation-invoking-outbound-gateway request-channel="requestChannel"
+   reply-channel="replyChannel"
+   object-name="o.s.i.jmx.config:type=TestBean,name=testBeanGateway"
+   operation-name="testWithReturn"/>
+----
+
+If the *reply-channel* attribute is not provided, the reply message will be sent to the channel that is identified by the `IntegrationMessageHeaderAccessor.REPLY_CHANNEL` header. That header is typically auto-created by the entry point into a message flow, such as any *Gateway* component. However, if the message flow was started by manually creating a Spring Integration Message and sending it directly to a *Channel*, then you must specify the message header explicitly or use the provided *reply-channel* attribute.
+
+[[jmx-mbean-exporter]]
+== MBean Exporter
+
+Spring Integration components themselves may be exposed as MBeans when the `IntegrationMBeanExporter` is configured. To create an instance of the `IntegrationMBeanExporter`, define a bean and provide a reference to an `MBeanServer` and a domain name (if desired). The domain can be left out, in which case the default domain is *org.springframework.integration*.
+
+[source,xml]
+----
+<int-jmx:mbean-export id="integrationMBeanExporter"
+            default-domain="my.company.domain" server="mbeanServer"/>
+
+<bean id="mbeanServer" class="org.springframework.jmx.support.MBeanServerFactoryBean">
+    <property name="locateExistingServerIfPossible" value="true"/>
+</bean>
+----
+
+Once the exporter is defined, start up your application with:
+
+`-Dcom.sun.management.jmxremote
+    -Dcom.sun.management.jmxremote.port=6969
+    -Dcom.sun.management.jmxremote.ssl=false
+    -Dcom.sun.management.jmxremote.authenticate=false`Then start JConsole (free with the JDK), and connect to the local process on `localhost:6969` to get a look at the management endpoints exposed. (The port and client are just examples to get you started quickly, there are other JMX clients available and some offer more sophisticated features than JConsole.)
+
+IMPORTANT: The MBean exporter is orthogonal to the one provided in Spring core - it registers message channels and message handlers, but not itself. You can expose the exporter itself, and certain other components in Spring Integration, using the standard `<context:mbean-export/>` tag. The exporter has a some metrics attached to it, for instance a count of the number of active handlers and the number of queued messages.
+
+ It also has a useful operation, as discussed in <<jmx-mbean-shutdown>>.
+
+Starting with *Spring Integration 4.0* the `@EnableIntegrationMBeanExport` annotation has been introduced for convenient configuration of a default (`integrationMbeanExporter`) bean of type `IntegrationMBeanExporter` with several useful options at the `@Configuration` class level. For example: [source,java]
+----
+@Configuration
+@EnableIntegration
+@EnableIntegrationMBeanExport(server = "mbeanServer", managedComponents = "input")
+public class ContextConfiguration {
+
+	@Bean
+	public MBeanServerFactoryBean mbeanServer() {
+		return new MBeanServerFactoryBean();
+	}
+}
+----
+
+ If there is a need to provide more options, or have several `IntegrationMBeanExporter` beans e.g. for different MBean Servers, or to avoid conflicts with the standard Spring `MBeanExporter` (e.g. via `@EnableMBeanExport`), you can simply configure an `IntegrationMBeanExporter` as a generic bean.
+
+[[jmx-mbean-features]]
+=== MBean ObjectNames
+
+All the `MessageChannel`, `MessageHandler` and `MessageSource` instances in the application are wrapped by the MBean exporter to provide management and monitoring features. The generated JMX object names for each component type are listed in the table below:
+
+.
+
+
+[width="80%", cols="1,1",frame="all", grid="all"]
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+					
+					
+					
+						
+							
+| Component Type
+
+							
+| ObjectName
+
+						
+					
+					
+						
+
+
+							
+| MessageChannel
+
+							
+| o.s.i:type=MessageChannel,name=<channelName>
+
+						
+
+
+						
+
+
+							
+| MessageSource
+
+							
+| o.s.i:type=MessageSource,name=<channelName>,bean=<source>
+
+						
+
+
+						
+
+
+							
+| MessageHandler
+
+							
+| o.s.i:type=MessageSource,name=<channelName>,bean=<source>
+
+						
+
+
+					
+
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+			The *bean* attribute in the object names for sources and handlers takes one of the values in the table below:
+
+.
+
+
+[width="80%", cols="1,1",frame="all", grid="all"]
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+
+					
+					
+					
+						
+							
+| Bean Value
+
+							
+| Description
+
+						
+					
+					
+						
+
+
+							
+| endpoint
+
+							
+| The bean name of the enclosing endpoint (e.g. <service-activator>) if there is one
+
+						
+
+
+						
+
+
+							
+| anonymous
+
+							
+| An indication that the enclosing endpoint didn't have a user-specified bean name, so the JMX name is the input channel name
+
+						
+
+
+						
+
+
+							
+| internal
+
+							
+| For well-known Spring Integration default components
+
+						
+
+
+						
+
+
+							
+| handler
+
+							
+| None of the above: fallback to the `toString()` of the object being monitored (handler or source)
+
+						
+
+
+					
+
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+			Custom elements can be appended to the object name by providing a reference to a `Properties` object in the `object-name-static-properties` attribute.
+
+Also, since *Spring Integration 3.0*, you can use a custom http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/jmx/export/naming/ObjectNamingStrategy.html[ObjectNamingStrategy] using the `object-naming-strategy` attribute. This permits greater control over the naming of the MBeans. For example, to group all Integration MBeans under an 'Integration' type. A simple custom naming strategy implementation might be:
+
+[source,java]
+----
+public class Namer implements ObjectNamingStrategy {
+
+	private final ObjectNamingStrategy realNamer = new KeyNamingStrategy();
+	@Override
+	public ObjectName getObjectName(Object managedBean, String beanKey) throws MalformedObjectNameException {
+		String actualBeanKey = beanKey.replace("type=", "type=Integration,componentType=");
+		return realNamer.getObjectName(managedBean, actualBeanKey);
+	}
+
+}
+----
+
+The `beanKey` argument is a String containing the standard object name beginning with the `default-domain` and including any additional static properties. This example simply moves the standard `type` part to `componentType` and sets the `type` to 'Integration', enabling selection of all Integration MBeans in one query: `"my.domain:type=Integration,*`. This also groups the beans under one tree entry under the domain in tools like VisualVM.
+
+NOTE: The default naming strategy is a http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/jmx/export/naming/MetadataNamingStrategy.html[MetadataNamingStrategy]. The exporter propagates the `default-domain` to that object to allow it to generate a fallback object name if parsing of the bean key fails. If your custom naming strategy is a `MetadataNamingStrategy` (or subclass), the exporter will *not* propagate the `default-domain`; you will need to configure it on your strategy bean.
+
+[[jmx-channel-features]]
+=== MessageChannel MBean Features
+
+Message channels report metrics according to their concrete type. If you are looking at a `DirectChannel`, you will see statistics for the send operation. If it is a `QueueChannel`, you will also see statistics for the receive operation, as well as the count of messages that are currently buffered by this `QueueChannel`. In both cases there are some metrics that are simple counters (message count and error count), and some that are estimates of averages of interesting quantities. The algorithms used to calculate these estimates are described briefly in the table below:
+
+.
+
+
+[width="80%", cols="1,1,1",frame="all", grid="all"]
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+
+					
+					
+					
+					
+						
+							
+| Metric Type
+
+							
+| Example
+
+							
+| Algorithm
+
+						
+					
+					
+						
+
+
+							
+| Count
+
+							
+| Send Count
+
+							
+| Simple incrementer. Increase by one when an event occurs.
+
+						
+
+
+						
+
+
+							
+| Duration
+
+							
+| Send Duration (method execution time in milliseconds)
+
+							
+| Exponential Moving Average with decay factor 10. Average of the method execution time over roughly the last 10 measurements.
+
+						
+
+
+						
+
+
+							
+| Rate
+
+							
+| Send Rate (number of operations per second)
+
+							
+| Inverse of Exponential Moving Average of the interval between events with decay in time (lapsing over 60 seconds) and per measurement (last 10 events).
+
+						
+
+
+						
+
+
+							
+| Ratio
+
+							
+| Send Error Ratio (ratio of errors to total sends)
+
+							
+| Estimate the success ratio as the Exponential Moving Average of the series composed of values 1 for success and 0 for failure (decaying as per the rate measurement over time and events). Error ratio is 1 - success ratio.
+
+						
+
+
+					
+
+|======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+			A feature of the time-based average estimates is that they decay with time if no new measurements arrive. To help interpret the behaviour over time, the time (in seconds) since the last measurement is also exposed as a metric.
+
+There are two basic exponential models: decay per measurement (appropriate for duration and anything where the number of measurements is part of the metric), and decay per time unit (more suitable for rate measurements where the time in between measurements is part of the metric). Both models depend on the fact that
+
+`S(n) = sum(i=0,i=n) w(i) x(i)`has a special form when `w(i) = r^i`, with `r=constant`:
+
+`S(n) = x(n) + r S(n-1)`(so you only have to store `S(n-1)`, not the whole series `x(i)`, to generate a new metric estimate from the last measurement). The algorithms used in the duration metrics use `r=exp(-1/M)` with `M=10`. The net effect is that the estimate `S(n)` is more heavily weighted to recent measurements and is composed roughly of the last `M` measurements. So `M` is the "window" or lapse rate of the estimate In the case of the vanilla moving average, `i` is a counter over the number of measurements. In the case of the rate we interpret `i` as the elapsed time, or a combination of elapsed time and a counter (so the metric estimate contains contributions roughly from the last `M` measurements and the last `T` seconds).
+
+[[jmx-mbean-shutdown]]
+=== Orderly Shutdown Managed Operation
+
+The MBean exporter provides a JMX operation to shut down the application in an orderly manner, intended for use before terminating the JVM.
+
+[source,java]
+----
+public void stopActiveComponents(boolean force, long howLong)
+
+----
+
+Its use and operation are described in <<jmx-shutdown>>.
+
